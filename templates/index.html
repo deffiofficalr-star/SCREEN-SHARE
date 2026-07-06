@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Screen Share — Управление</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(ellipse at 50% 0%, #1a0a2e 0%, #0d0d0d 70%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            margin: 0;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 32px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .container {
+            max-width: 640px;
+            width: 100%;
+            padding: 48px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.15), transparent 70%);
+            top: -100px;
+            right: -100px;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .glow2 {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(167, 139, 250, 0.08), transparent 70%);
+            bottom: -50px;
+            left: -50px;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 6px;
+        }
+
+        .header .icon {
+            font-size: 36px;
+            line-height: 1;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: #9ca3af;
+            font-size: 15px;
+            margin-bottom: 32px;
+            padding-left: 4px;
+            font-weight: 400;
+            letter-spacing: 0.2px;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: border-color 0.3s;
+        }
+
+        .control-group:hover {
+            border-color: rgba(124, 58, 237, 0.2);
+        }
+
+        .control-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #d1d5db;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .control-group label .emoji {
+            font-size: 16px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(90deg, #4c1d95, #7c3aed);
+            border-radius: 4px;
+            outline: none;
+            margin: 6px 0 4px;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #7c3aed;
+            cursor: pointer;
+            border: 2px solid #1e1e2e;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+            transition: 0.2s;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 30px rgba(124, 58, 237, 0.6);
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .range-value {
+            color: #a78bfa;
+            font-weight: 600;
+            font-size: 14px;
+            float: right;
+            margin-top: -20px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.4);
+            color: #e5e7eb;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+        }
+
+        select:focus {
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+        }
+
+        select option {
+            background: #1a1a2e;
+            color: #e5e7eb;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            margin: 6px 0 18px;
+            font-weight: 500;
+            font-size: 15px;
+            border: 1px solid transparent;
+            transition: 0.4s;
+        }
+
+        .status-on {
+            background: rgba(5, 150, 105, 0.08);
+            color: #34d399;
+            border-color: rgba(5, 150, 105, 0.15);
+        }
+
+        .status-off {
+            background: rgba(220, 38, 38, 0.06);
+            color: #f87171;
+            border-color: rgba(220, 38, 38, 0.1);
+        }
+
+        .status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-dot 1.8s infinite;
+        }
+
+        .status-on .dot {
+            background: #34d399;
+        }
+        .status-off .dot {
+            background: #6b7280;
+            animation: none;
+        }
+
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.4;
+                transform: scale(0.8);
+            }
+        }
+
+        .clients {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin: -6px 0 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .clients span {
+            color: #a78bfa;
+            font-weight: 600;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: white;
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(124, 58, 237, 0.45);
+        }
+
+        .btn-start:active {
+            transform: scale(0.98);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            box-shadow: 0 4px 20px rgba(220, 38, 38, 0.25);
+        }
+
+        .btn-stop:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(220, 38, 38, 0.4);
+        }
+
+        .btn-stream {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e5e7eb;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-stream:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .link-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 14px;
+            color: #a78bfa;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: all;
+            word-break: break-all;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .link-box:hover {
+            border-color: rgba(124, 58, 237, 0.3);
+            background: rgba(124, 58, 237, 0.04);
+        }
+
+        .link-box .label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Inter', sans-serif;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .footer {
+            text-align: center;
+            color: #4b5563;
+            font-size: 12px;
+            margin-top: 24px;
+            letter-spacing: 0.3px;
+        }
+
+        .footer a {
+            color: #6b7280;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer a:hover {
+            color: #a78bfa;
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 28px 18px;
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+            .header .icon {
+                font-size: 28px;
+            }
+            .btn {
+                font-size: 14px;
+                padding: 12px;
+            }
+            .control-group {
+                padding: 14px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container glass">
+        <div class="glow"></div>
+        <div class="glow2"></div>
+
+        <div class="header">
+            <span class="icon">🖥️</span>
+            <h1>Screen Share</h1>
+        </div>
+        <p class="subtitle">Трансляция экрана в реальном времени</p>
+
+        <div class="control-group">
+            <label><span class="emoji">🖥️</span> Монитор</label>
+            <select id="monitor"><option value="0">Монитор 1</option></select>
+        </div>
+
+        <div class="control-group">
+            <label><span class="emoji">🎨</span> Качество</label>
+            <input type="range" id="quality" min="10" max="100" value="70" />
+            <span class="range-value" id="qualityLabel">70%</span>
+            <div class="range-labels"><span>Низкое</span><span>Высокое</span></div>
+        </div>
+
+        <div class="control-group">
+            <label><span class="emoji">⚡</span> Частота кадров (FPS)</label>
+            <input type="range" id="fps" min="1" max="60" value="15" />
+            <span class="range-value" id="fpsLabel">15 FPS</span>
+            <div class="range-labels"><span>1</span><span>60</span></div>
+        </div>
+
+        <div class="control-group">
+            <label><span class="emoji">📐</span> Разрешение</label>
+            <select id="resolution">
+                <option value="640x480">640x480</option>
+                <option value="854x480">854x480</option>
+                <option value="1280x720" selected>1280x720 (HD)</option>
+                <option value="1920x1080">1920x1080 (Full HD)</option>
+                <option value="2560x1440">2560x1440 (2K)</option>
+            </select>
+        </div>
+
+        <div id="status" class="status status-off">
+            <span class="dot"></span>
+            <span id="statusText">Трансляция остановлена</span>
+        </div>
+
+        <div class="clients">👥 Зрителей: <span id="clientsCount">0</span></div>
+
+        <button class="btn btn-start" id="startBtn">▶️ Начать трансляцию</button>
+        <button class="btn btn-stop" id="stopBtn" style="display: none;">⏹️ Остановить</button>
+
+        <div class="btn-group">
+            <button class="btn btn-stream" id="streamBtn">📱 Открыть просмотр</button>
+        </div>
+
+        <div class="link-box" id="linkBox">
+            <span class="label">🔗 Ссылка для просмотра</span>
+            http://localhost:5000/stream
+        </div>
+
+        <div class="footer">
+            <a href="https://github.com/deffiofficalr-star/SCREEN-SHARE" target="_blank">GitHub</a>
+            &nbsp;·&nbsp; Screen Share v1.0
+        </div>
+    </div>
+
+    <script>
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const streamBtn = document.getElementById('streamBtn');
+        const statusDiv = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const clientsSpan = document.getElementById('clientsCount');
+        const linkBox = document.getElementById('linkBox');
+
+        const qualitySlider = document.getElementById('quality');
+        const qualityLabel = document.getElementById('qualityLabel');
+        const fpsSlider = document.getElementById('fps');
+        const fpsLabel = document.getElementById('fpsLabel');
+        const monitorSelect = document.getElementById('monitor');
+        const resolutionSelect = document.getElementById('resolution');
+
+        let isStreaming = false;
+
+        qualitySlider.addEventListener('input', () => {
+            qualityLabel.textContent = qualitySlider.value + '%';
+        });
+
+        fpsSlider.addEventListener('input', () => {
+            fpsLabel.textContent = fpsSlider.value + ' FPS';
+        });
+
+        function updateStatus(streaming) {
+            if (streaming) {
+                statusDiv.className = 'status status-on';
+                statusText.textContent = '🟢 Трансляция активна';
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'block';
+                isStreaming = true;
+            } else {
+                statusDiv.className = 'status status-off';
+                statusText.textContent = '⏹️ Трансляция остановлена';
+                startBtn.style.display = 'block';
+                stopBtn.style.display = 'none';
+                isStreaming = false;
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                qualitySlider.value = data.quality || 70;
+                qualityLabel.textContent = data.quality + '%';
+                fpsSlider.value = data.fps || 15;
+                fpsLabel.textContent = data.fps + ' FPS';
+                updateStatus(data.streaming || false);
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadMonitors() {
+            try {
+                const res = await fetch('/api/monitors');
+                const monitors = await res.json();
+                monitorSelect.innerHTML = '';
+                monitors.forEach(mon => {
+                    const opt = document.createElement('option');
+                    opt.value = mon.id;
+                    opt.textContent = mon.name + ` (${mon.width}x${mon.height})`;
+                    monitorSelect.appendChild(opt);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function startStream() {
+            const res = resolutionSelect.value.split('x');
+            const settings = {
+                streaming: true,
+                quality: parseInt(qualitySlider.value),
+                fps: parseInt(fpsSlider.value),
+                monitor: parseInt(monitorSelect.value),
+                width: parseInt(res[0]),
+                height: parseInt(res[1])
+            };
+            try {
+                await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                updateStatus(true);
+            } catch (e) {
+                alert('Ошибка запуска трансляции');
+            }
+        }
+
+        async function stopStream() {
+            try {
+                await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ streaming: false })
+                });
+                updateStatus(false);
+            } catch (e) {
+                alert('Ошибка остановки');
+            }
+        }
+
+        startBtn.addEventListener('click', startStream);
+        stopBtn.addEventListener('click', stopStream);
+        streamBtn.addEventListener('click', () => window.open('/stream', '_blank'));
+
+        linkBox.addEventListener('click', () => {
+            navigator.clipboard.writeText(linkBox.textContent.replace('🔗 Ссылка для просмотра', '').trim());
+            alert('✅ Ссылка скопирована!');
+        });
+
+        loadSettings();
+        loadMonitors();
+
+        setInterval(async () => {
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                clientsSpan.textContent = data.clients || 0;
+            } catch (e) {}
+        }, 3000);
+    </script>
+</body>
+</html>
